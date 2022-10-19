@@ -6,12 +6,14 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Runner {
-    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
+    public static String DIR = "/cs/home/jcorr851/Documents/netflix.data";
     public static double SUPPORT_THRESHOLD = 0.01;
     public static double threshold; // As a number of items, not a fraction.
     public static Integer num_baskets;
+    public static long end_time = 0;
 
     public static void main(String[] args) throws IOException {
+        final long startTime = System.currentTimeMillis();
         //Do the first pass, get back a tuple of the counts HashMap, and the number of baskets.
         Tuple<HashMap<Integer, Integer>, Integer> counts = get_item_counts();
 
@@ -25,13 +27,13 @@ public class Runner {
         //Trim the hashmap to exclude items below threshold.
         map.values().removeIf(value -> value < threshold);
 
-        System.out.println("Ayy");
-
         //Perform Second Pass, find frequent itemsets
         HashMap<HashSet<Integer>, Integer> ans = find_frequent_pairs(map);
-        System.out.println("DING!");
 
-        // TODO: Print out the values xd
+        System.out.println(ans.toString());
+
+        final long endTime = System.currentTimeMillis();
+        System.out.println("Execution time: " + (endTime - startTime)/1000.0 + "s");
 
     }
 
@@ -119,7 +121,6 @@ public class Runner {
                     }
 
                 }
-
 
                 // Progress indicator
                 baskets_parsed++;
