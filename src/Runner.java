@@ -6,23 +6,32 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Runner {
-    public static String DIR = "/cs/home/jcorr851/Documents/retail.dat";
-    public static double SUPPORT_THRESHOLD = 0.01; //
+    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
+    public static double SUPPORT_THRESHOLD = 0.01;
+    public static double threshold; // As a number of items, not a fraction.
+    public static Integer num_baskets;
+
     public static void main(String[] args) throws IOException {
+        //Do the first pass, get back a tuple of the counts HashMap, and the number of baskets.
         Tuple<HashMap<Integer, Integer>, Integer> counts = get_item_counts();
 
-        // Separate from tuple
+        // Move out of tuple into variables
         HashMap<Integer, Integer> map = counts.get_left();
-        Integer num_baskets = counts.get_right();
+        num_baskets = counts.get_right();
 
-        double threshold = counts.get_right() * SUPPORT_THRESHOLD; // number of occurances to be considered frequent.
+        threshold = num_baskets * SUPPORT_THRESHOLD; // number of occurances to be considered frequent.
 
 
         //Trim the hashmap to exclude items below threshold.
         map.values().removeIf(value -> value < threshold);
 
         System.out.println("Ayy");
-        //BRUTE FORCE HERE!
+
+        //Perform Second Pass, find frequent itemsets
+        HashMap<HashSet<Integer>, Integer> ans = find_frequent_pairs(map);
+        System.out.println("DING!");
+
+        // TODO: Print out the values xd
 
     }
 
@@ -50,10 +59,6 @@ public class Runner {
             }
 
 
-
-
-
-
         //Boilerplate!
             reader.close();            //////
         } catch (IOException e) {     //////
@@ -65,6 +70,7 @@ public class Runner {
     }
 
 
+    // Given a string of integers separated by spaces, return those integers as elements in an ArrayList
     public static ArrayList<Integer> string_to_int_array(String basket) {
         List<String> string_array = Arrays.asList(basket.split(" "));
         ArrayList<Integer> as_ints = new ArrayList<Integer>();
@@ -79,9 +85,64 @@ public class Runner {
 
 
     // Return all frequent pairs in the dataset, using a HashMap recording the count of each ID, and a minimum threshold for values to be considered
-    public int FindFrequentPairs(HashMap<Integer, Integer> counts) {
+    public static HashMap<HashSet<Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
+        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<>();
 
-        return 0;
+        BufferedReader reader;
+        try {
+            reader = new BufferedReader(new FileReader(DIR));
+            String basket;
+            basket = reader.readLine();
+            int baskets_parsed = 0; // To print progress during runtime.
+            while (basket != null) {
+                ArrayList<Integer> ints = string_to_int_array(basket);
+
+
+                // For each pair of ints in the basket
+                for (int i = 0; i <= ints.size() - 2; i++){
+                    if (counts.containsKey(ints.get(i))) { //If the element was frequent
+                        for (int j = i + 1; j <= ints.size() - 1; j++){
+                            if (counts.containsKey(ints.get(i))){
+                                HashSet<Integer> pair = new HashSet<>();
+                                pair.add(ints.get(i));
+                                pair.add(ints.get(j));
+
+                                if (!frequencies.containsKey(pair)){ // If this is the first time seeing this pair
+                                    frequencies.put(pair, 1); // Initialize
+                                }
+                                else {
+                                    frequencies.put(pair, (Integer) frequencies.get(pair) + 1); //Increment count by 1.
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+
+
+                // Progress indicator
+                baskets_parsed++;
+                if ((baskets_parsed % (num_baskets/100)) == 0) {
+                    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
+                }
+
+                basket = reader.readLine();
+            }
+
+
+            //Boilerplate!
+            reader.close();            //////
+        } catch (IOException e) {     //////
+            e.printStackTrace();     //////
+        }
+            //Boilerplate!
+
+
+        // Trim the final result to exclude below threshold
+        frequencies.values().removeIf(value -> value < threshold);
+
+        return frequencies;
     }
 
 }
