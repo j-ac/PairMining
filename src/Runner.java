@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Runner {
-    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\netflix.data";
+    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
     public static double SUPPORT_THRESHOLD = 0.01;
     public static double threshold; // As a number of items, not a fraction.
     public static Integer num_baskets;
@@ -33,11 +33,11 @@ public class Runner {
         System.out.println("Trimmed hashmap.");//Debug
 
         //Perform Second Pass, find frequent itemsets
-        HashMap<HashSet<Integer>, Integer> ans = find_frequent_pairs(map);
+        HashMap<Tuple<Integer, Integer>, Integer> ans = find_frequent_pairs(map);
 
         System.out.println("Found frequent pairs"); //Debug
 
-        System.out.println(ans.toString());
+        System.out.println(ans);
 
         end_time = System.currentTimeMillis();
         System.out.println("Execution time: " + (end_time - startTime)/1000.0 + "s");
@@ -103,8 +103,8 @@ public class Runner {
 
 
     // Return all frequent pairs in the dataset, using a HashMap recording the count of each ID, and a minimum threshold for values to be considered
-    public static HashMap<HashSet<Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
-        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<>();
+    public static HashMap<Tuple<Integer, Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
+        HashMap<Tuple<Integer, Integer>, Integer> frequencies = new HashMap<>();
 
         BufferedReader reader;
         try {
@@ -121,15 +121,17 @@ public class Runner {
                     if (counts.containsKey(ints.get(i))) { //If the element was frequent
                         for (int j = i + 1; j <= ints.size() - 1; j++){
                             if (counts.containsKey(ints.get(j))){
-                                HashSet<Integer> pair = new HashSet<>();
-                                pair.add(ints.get(i));
-                                pair.add(ints.get(j));
+                                int left = ints.get(i);
+                                int right = ints.get(j);
+                                assert(left < right);
+                                Tuple<Integer, Integer> pair = new Tuple<>(left, right);
+
 
                                 if (!frequencies.containsKey(pair)){ // If this is the first time seeing this pair
                                     frequencies.put(pair, 1); // Initialize
                                 }
                                 else {
-                                    frequencies.put(pair, (Integer) frequencies.get(pair) + 1); //Increment count by 1.
+                                    frequencies.put(pair, frequencies.get(pair) + 1); //Increment count by 1.
                                 }
                             }
 

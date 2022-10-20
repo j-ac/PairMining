@@ -7,6 +7,7 @@ public class Tuple<L, R> {
         this.right = right;
     }
 
+
     public L get_left(){
         return left;
     }
@@ -33,6 +34,10 @@ public class Tuple<L, R> {
         ret = 433 * ret + left.hashCode();
         ret = 433 * ret + right.hashCode();
         return ret;
+    }
+
+    public String toString(){
+        return ("{" + this.left + ", " + this.right + "}");
     }
 }
 
