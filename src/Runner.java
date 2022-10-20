@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Runner {
-    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
+    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\netflix.data";
     public static double SUPPORT_THRESHOLD = 0.01;
     public static double threshold; // As a number of items, not a fraction.
     public static Integer num_baskets;
@@ -33,7 +33,7 @@ public class Runner {
         System.out.println("Trimmed hashmap.");//Debug
 
         //Perform Second Pass, find frequent itemsets
-        HashMap<Tuple<Integer, Integer>, Integer> ans = find_frequent_pairs(map);
+        HashMap<HashSet<Integer>, Integer> ans = find_frequent_pairs(map);
 
         System.out.println("Found frequent pairs"); //Debug
 
@@ -103,8 +103,8 @@ public class Runner {
 
 
     // Return all frequent pairs in the dataset, using a HashMap recording the count of each ID, and a minimum threshold for values to be considered
-    public static HashMap<Tuple<Integer, Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
-        HashMap<Tuple<Integer, Integer>, Integer> frequencies = new HashMap<>();
+    public static HashMap<HashSet<Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
+        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<>();
 
         BufferedReader reader;
         try {
@@ -117,15 +117,20 @@ public class Runner {
 
 
                 // For each pair of ints in the basket
+                long basket_time_start = System.currentTimeMillis(); //debug
+                long basket_time_end; //debug
                 for (int i = 0; i <= ints.size() - 2; i++){
                     if (counts.containsKey(ints.get(i))) { //If the element was frequent
                         for (int j = i + 1; j <= ints.size() - 1; j++){
                             if (counts.containsKey(ints.get(j))){
-                                int left = ints.get(i);
-                                int right = ints.get(j);
-                                assert(left < right);
-                                Tuple<Integer, Integer> pair = new Tuple<>(left, right);
+                                //int left = ints.get(i);
+                                //int right = ints.get(j);
+                                //assert(left < right);
+                                //Tuple<Integer, Integer> pair = new Tuple<>(left, right);
 
+                                HashSet<Integer> pair = new HashSet<>();
+                                pair.add(ints.get(i));
+                                pair.add(ints.get(j));
 
                                 if (!frequencies.containsKey(pair)){ // If this is the first time seeing this pair
                                     frequencies.put(pair, 1); // Initialize
@@ -137,9 +142,9 @@ public class Runner {
 
                         }
                     }
-
                 }
-
+                basket_time_end = System.currentTimeMillis(); //debug
+                System.out.println("Execution time: " + (basket_time_end - basket_time_start)/1000.0 + "s\tSize of Basket:" + ints.size() + "\tbaskets parsed:" + baskets_parsed); //debug
                 // Progress indicator
                 baskets_parsed++;
                 if ((baskets_parsed % (num_baskets/100)) == 0) {
