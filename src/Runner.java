@@ -93,7 +93,22 @@ public class Runner {
 
     // Given a string of integers separated by spaces, return those integers as elements in an ArrayList
     public static ArrayList<Integer> string_to_int_array(String basket) {
-        List<String> string_array = Arrays.asList(basket.split(" "));
+      //List<String> string_array = Arrays.asList(basket.split(" "));
+      ArrayList<String> string_array = new ArrayList();
+        int start = 0;
+        int end = 0;
+        while (true) {
+            start = basket.indexOf(" ", end);
+            end = basket.indexOf(" ", start + 1);
+
+            if (end == -1){
+                break;
+            }
+            string_array.add(basket.substring(start + 1, end));
+
+        }
+
+
         ArrayList<Integer> as_ints = new ArrayList<Integer>();
 
         for (String s :string_array){
@@ -108,7 +123,7 @@ public class Runner {
     // Return all frequent pairs in the dataset, using a HashMap recording the count of each ID, and a minimum threshold for values to be considered
     public static HashMap<HashSet<Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
         hashmap_capacity = (int) Math.pow(counts.size(), 2) + 50000; // Possible number of pairs, plus some extra for good measure.
-        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<HashSet<Integer>, Integer>(16, (float) 0.75); //Only resize if full, should not occur since the map size is over the required capacity.
+        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<HashSet<Integer>, Integer>(hashmap_capacity, (float) 1.00); //Only resize if full, should not occur since the map size is over the required capacity.
 
         BufferedReader reader;
         try {
@@ -124,17 +139,19 @@ public class Runner {
                 long basket_time_start = System.currentTimeMillis(); //debug
                 long basket_time_end; //debug
                 for (int i = 0; i <= ints.size() - 2; i++){
-                    if (counts.containsKey(ints.get(i))) { //If the element was frequent
+                    int candidate1 = ints.get(i);
+                    if (counts.containsKey(candidate1)) { //If the element was frequent
                         for (int j = i + 1; j <= ints.size() - 1; j++){
-                            if (counts.containsKey(ints.get(j))){
+                            int candidate2 = ints.get(j);
+                            if (counts.containsKey(candidate2)){
                                 //int left = ints.get(i);
                                 //int right = ints.get(j);
                                 //assert(left < right);
                                 //Tuple<Integer, Integer> pair = new Tuple<>(left, right);
 
-                                HashSet<Integer> pair = new HashSet<>();
-                                pair.add(ints.get(i));
-                                pair.add(ints.get(j));
+                                HashSet<Integer> pair = new HashSet<>(2, (float) 1.0); // Should only contain 2, HashSet's 16 elements is wasteful
+                                pair.add(candidate1);
+                                pair.add(candidate2);
 
 
                                 Integer this_pairs_frequency = frequencies.get(pair);
@@ -153,15 +170,15 @@ public class Runner {
                     }
                 }
 
-                basket_time_end = System.currentTimeMillis(); //debug
-                execution_time = (basket_time_end - startTime)/1000.0;
-                //System.out.println("Execution time: " + (basket_time_end - basket_time_start)/1000.0 + "s\tSize of Basket:" + ints.size() + "\tbaskets parsed:" + baskets_parsed); //debug
+                //basket_time_end = System.currentTimeMillis(); //debug
+                //execution_time = (basket_time_end - basket_time_start)/1000.0;
+                //System.out.println("Execution time: " + (execution_time + "s\tSize of Basket:" + ints.size() + "\tbaskets parsed:" + baskets_parsed)); //debug
                 // Progress indicator
                 baskets_parsed++;
-                //if ((baskets_parsed % (num_baskets/100)) == 0) {
-                //    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
+                if ((baskets_parsed % (num_baskets/100)) == 0) {
+                    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
 
-                //}
+                }
 
                 basket = reader.readLine();
             }
