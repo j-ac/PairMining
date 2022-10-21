@@ -6,15 +6,18 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Runner {
-    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\netflix.data";
+    public static String DIR = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
     public static double SUPPORT_THRESHOLD = 0.01;
     public static double threshold; // As a number of items, not a fraction.
     public static Integer num_baskets;
+    public static long startTime;
     public static long end_time = 0;
-    public static int feedback_interval = 5000; // On pass one, how many lines should be parsed before another status update is given
+    public static int feedback_interval = 5000; // Debug: On pass one, how many lines should be parsed before another status update is given
+    public static double execution_time; // Debug: updated after each basket
+    public static int hashmap_capacity; // To avoid costly resizing on pass2, the program will determine an appropriate size before any insertions.
 
     public static void main(String[] args) throws IOException {
-        final long startTime = System.currentTimeMillis();
+        startTime = System.currentTimeMillis();
         //Do the first pass, get back a tuple of the counts HashMap, and the number of baskets.
         Tuple<HashMap<Integer, Integer>, Integer> counts = get_item_counts();
         System.out.println("Got item counts.");//Debug
@@ -68,10 +71,10 @@ public class Runner {
 
 
                 // Progress indicator
-                baskets_parsed++;
-                if ((baskets_parsed % (feedback_interval) == 0)) {
-                    System.out.println("counted basket #" + baskets_parsed);
-                }
+                //baskets_parsed++;
+                //if ((baskets_parsed % (feedback_interval) == 0)) {
+                //    System.out.println("counted basket #" + baskets_parsed);
+                //}
 
                 basket = reader.readLine();
             }
@@ -104,7 +107,8 @@ public class Runner {
 
     // Return all frequent pairs in the dataset, using a HashMap recording the count of each ID, and a minimum threshold for values to be considered
     public static HashMap<HashSet<Integer>, Integer> find_frequent_pairs(HashMap<Integer, Integer> counts) {
-        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<>();
+        hashmap_capacity = (int) Math.pow(counts.size(), 2) + 50000; // Possible number of pairs, plus some extra for good measure.
+        HashMap<HashSet<Integer>, Integer> frequencies = new HashMap<HashSet<Integer>, Integer>(16, (float) 0.75); //Only resize if full, should not occur since the map size is over the required capacity.
 
         BufferedReader reader;
         try {
@@ -132,24 +136,32 @@ public class Runner {
                                 pair.add(ints.get(i));
                                 pair.add(ints.get(j));
 
-                                if (!frequencies.containsKey(pair)){ // If this is the first time seeing this pair
+
+                                Integer this_pairs_frequency = frequencies.get(pair);
+                                if (this_pairs_frequency == null){ // If this is the first time seeing this pair
                                     frequencies.put(pair, 1); // Initialize
                                 }
                                 else {
-                                    frequencies.put(pair, frequencies.get(pair) + 1); //Increment count by 1.
+                                    if (this_pairs_frequency <= threshold) { // Don't increment if pair is already known as frequent.
+                                        frequencies.put(pair, this_pairs_frequency + 1); //Increment count by 1.
+                                    }
+
                                 }
                             }
 
                         }
                     }
                 }
+
                 basket_time_end = System.currentTimeMillis(); //debug
-                System.out.println("Execution time: " + (basket_time_end - basket_time_start)/1000.0 + "s\tSize of Basket:" + ints.size() + "\tbaskets parsed:" + baskets_parsed); //debug
+                execution_time = (basket_time_end - startTime)/1000.0;
+                //System.out.println("Execution time: " + (basket_time_end - basket_time_start)/1000.0 + "s\tSize of Basket:" + ints.size() + "\tbaskets parsed:" + baskets_parsed); //debug
                 // Progress indicator
                 baskets_parsed++;
-                if ((baskets_parsed % (num_baskets/100)) == 0) {
-                    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
-                }
+                //if ((baskets_parsed % (num_baskets/100)) == 0) {
+                //    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
+
+                //}
 
                 basket = reader.readLine();
             }
