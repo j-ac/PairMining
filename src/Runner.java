@@ -20,7 +20,7 @@ public class Runner {
         startTime = System.currentTimeMillis();
         //Do the first pass, get back a tuple of the counts HashMap, and the number of baskets.
         Tuple<HashMap<Integer, Integer>, Integer> counts = get_item_counts();
-        System.out.println("Got item counts.");//Debug
+        //System.out.println("Got item counts.");//Debug
 
         // Move out of tuple into variables
         HashMap<Integer, Integer> map = counts.get_left();
@@ -28,22 +28,22 @@ public class Runner {
 
         threshold = num_baskets * SUPPORT_THRESHOLD; // number of occurances to be considered frequent.
 
-        System.out.println("Calculated threshold.");//Debug
+        //System.out.println("Calculated threshold.");//Debug
 
         //Trim the hashmap to exclude items below threshold.
         map.values().removeIf(value -> value < threshold);
 
-        System.out.println("Trimmed hashmap.");//Debug
+        //System.out.println("Trimmed hashmap.");//Debug
 
         //Perform Second Pass, find frequent itemsets
         HashMap<HashSet<Integer>, Integer> ans = find_frequent_pairs(map);
 
-        System.out.println("Found frequent pairs"); //Debug
+        //System.out.println("Found frequent pairs"); //Debug
 
         System.out.println(ans);
 
         end_time = System.currentTimeMillis();
-        System.out.println("Execution time: " + (end_time - startTime)/1000.0 + "s");
+        System.out.println("Execution time: " + (end_time - startTime) / 1000.0 + "s");
 
     }
 
@@ -60,11 +60,10 @@ public class Runner {
             while (basket != null) {
                 ArrayList<Integer> ints = string_to_int_array(basket);
                 num_rows++;
-                for (Integer i : ints){
+                for (Integer i : ints) {
                     if (!counts.containsKey(i)) { //If first time seeing this integer
                         counts.put(i, 1);
-                    }
-                    else {
+                    } else {
                         counts.put(i, (Integer) counts.get(i) + 1); //Increment count by 1.
                     }
                 }
@@ -80,7 +79,7 @@ public class Runner {
             }
 
 
-        //Boilerplate!
+            //Boilerplate!
             reader.close();            //////
         } catch (IOException e) {     //////
             e.printStackTrace();     //////
@@ -91,17 +90,16 @@ public class Runner {
     }
 
 
-    // Given a string of integers separated by spaces, return those integers as elements in an ArrayList
     public static ArrayList<Integer> string_to_int_array(String basket) {
-      //List<String> string_array = Arrays.asList(basket.split(" "));
-      ArrayList<String> string_array = new ArrayList();
+        //List<String> string_array = Arrays.asList(basket.split(" "));
+        ArrayList<String> string_array = new ArrayList();
         int start = 0;
         int end = 0;
         while (true) {
             start = basket.indexOf(" ", end);
             end = basket.indexOf(" ", start + 1);
 
-            if (end == -1){
+            if (end == -1) {
                 break;
             }
             string_array.add(basket.substring(start + 1, end));
@@ -111,10 +109,39 @@ public class Runner {
 
         ArrayList<Integer> as_ints = new ArrayList<Integer>();
 
-        for (String s :string_array){
+        for (String s : string_array) {
             as_ints.add(Integer.decode(s));
         }
 
+        return as_ints;
+    }
+
+    // Given a string of integers separated by spaces, and a frequent items array return, the strings as integers as elements in an ArrayList only if they are frequent.
+    // Note: the algorithm expects non-frquent items are already trimmed from the HashMap
+    public static ArrayList<Integer> string_to_frequent_int_array(String basket, HashMap<Integer, Integer> counts) {
+        ArrayList<Integer> as_ints = new ArrayList<Integer>();
+        // First number
+        int one_item = Integer.decode(basket.substring(0, basket.indexOf(' ')));
+        if (counts.containsKey(one_item)){
+            as_ints.add(one_item);
+        }
+
+        // Subsequent numbers
+        int start = 0;
+        int end = 0;
+        while (true) {
+            start = basket.indexOf(' ', end);
+            end = basket.indexOf(' ', start + 1);
+
+            if (end == -1) {
+                break;
+            }
+
+            one_item = Integer.decode(basket.substring(start + 1, end)); //Intepret string as int
+            if (counts.containsKey(one_item)) { //if the item is frequent
+                as_ints.add(one_item);
+            }
+        }
         return as_ints;
 
     }
@@ -132,42 +159,38 @@ public class Runner {
             basket = reader.readLine();
             int baskets_parsed = 0; // To print progress during runtime.
             while (basket != null) {
-                ArrayList<Integer> ints = string_to_int_array(basket);
+                ArrayList<Integer> ints = string_to_frequent_int_array(basket, counts);
 
 
                 // For each pair of ints in the basket
                 long basket_time_start = System.currentTimeMillis(); //debug
                 long basket_time_end; //debug
-                for (int i = 0; i <= ints.size() - 2; i++){
+                for (int i = 0; i <= ints.size() - 2; i++) {
                     int candidate1 = ints.get(i);
-                    if (counts.containsKey(candidate1)) { //If the element was frequent
-                        for (int j = i + 1; j <= ints.size() - 1; j++){
-                            int candidate2 = ints.get(j);
-                            if (counts.containsKey(candidate2)){
-                                //int left = ints.get(i);
-                                //int right = ints.get(j);
-                                //assert(left < right);
-                                //Tuple<Integer, Integer> pair = new Tuple<>(left, right);
+                    for (int j = i + 1; j <= ints.size() - 1; j++) {
+                        int candidate2 = ints.get(j);
+                        //int left = ints.get(i);
+                        //int right = ints.get(j);
+                        //assert(left < right);
+                        //Tuple<Integer, Integer> pair = new Tuple<>(left, right);
 
-                                HashSet<Integer> pair = new HashSet<>(2, (float) 1.0); // Should only contain 2, HashSet's 16 elements is wasteful
-                                pair.add(candidate1);
-                                pair.add(candidate2);
+                        HashSet<Integer> pair = new HashSet<>(2, (float) 1.0); // Should have capacity 2, HashSet's 16 elements is wasteful
+                        pair.add(candidate1);
+                        pair.add(candidate2);
 
 
-                                Integer this_pairs_frequency = frequencies.get(pair);
-                                if (this_pairs_frequency == null){ // If this is the first time seeing this pair
-                                    frequencies.put(pair, 1); // Initialize
-                                }
-                                else {
-                                    if (this_pairs_frequency <= threshold) { // Don't increment if pair is already known as frequent.
-                                        frequencies.put(pair, this_pairs_frequency + 1); //Increment count by 1.
-                                    }
-
-                                }
+                        Integer this_pairs_frequency = frequencies.get(pair);
+                        if (this_pairs_frequency == null) { // If this is the first time seeing this pair
+                            frequencies.put(pair, 1); // Initialize
+                        } else {
+                            if (this_pairs_frequency <= threshold) { // Don't increment if pair is already known as frequent.
+                                frequencies.put(pair, this_pairs_frequency + 1); //Increment count by 1.
                             }
 
                         }
+
                     }
+
                 }
 
                 //basket_time_end = System.currentTimeMillis(); //debug
@@ -175,10 +198,10 @@ public class Runner {
                 //System.out.println("Execution time: " + (execution_time + "s\tSize of Basket:" + ints.size() + "\tbaskets parsed:" + baskets_parsed)); //debug
                 // Progress indicator
                 baskets_parsed++;
-                if ((baskets_parsed % (num_baskets/100)) == 0) {
-                    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
-
-                }
+//                if ((baskets_parsed % (num_baskets/100)) == 0) {
+//                    System.out.println((int)(((double) baskets_parsed / num_baskets) * 100) + "% complete.");
+//
+//                }
 
                 basket = reader.readLine();
             }
@@ -189,7 +212,7 @@ public class Runner {
         } catch (IOException e) {     //////
             e.printStackTrace();     //////
         }
-            //Boilerplate!
+        //Boilerplate!
 
 
         // Trim the final result to exclude below threshold
@@ -197,5 +220,5 @@ public class Runner {
 
         return frequencies;
     }
-
 }
+
