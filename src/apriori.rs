@@ -5,8 +5,12 @@ use std::hash::Hash;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::ops::Add;
+use std::ops::RemAssign;
 use std::path::Path;
 use std::time::Instant;
+
+use crate::triangle_matrix;
+use crate::triangle_matrix::TriangleMatrix;
 
 const THRESHOLD: f64 = 0.01;
 const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
@@ -14,22 +18,23 @@ const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\
 pub fn run() -> std::io::Result<()> {
     let start = Instant::now();
 
-    let (frequent_items, minimum_support) = get_item_counts();
-    let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support);
+    let (frequent_items, old_ids, minimum_support) = get_item_counts();
+    let frequent_pairs_matrix = get_frequent_pairs_matrix(frequent_items);
 
-
-    let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
-    for i in frequent_pairs.iter() {
-        write!(out, "{:?}\n", i.0);
+    for i in 0..frequent_pairs_matrix.array.len(){
+        let column = frequent_pairs_matrix.array.get(i).unwrap();
+            for j in 0 .. column.len(){
+                if frequent_pairs_matrix[(i,j)] > minimum_support{
+                    print!("{},{}", old_ids.get(&i).unwrap(), old_ids.get(&j).unwrap());
+                }
+            }
     }
 
-    
-    println!("\nRuntime: {:.2?}", start.elapsed());
     Ok(())
 }
 
 // Performs pass one
-fn get_item_counts() -> (HashMap<usize, usize>, usize) {
+fn get_item_counts() -> (HashMap<usize, usize>, HashMap<usize, usize>, usize) {
     let f = File::open(DIRECTORY).unwrap();
     let reader = BufReader::new(f);
 
@@ -49,14 +54,33 @@ fn get_item_counts() -> (HashMap<usize, usize>, usize) {
 
     let minimum_support = (num_baskets as f64 * THRESHOLD).ceil() as usize;
     counts.retain(|_, &mut v| v >= minimum_support); // Keep everything meeting the threshold
-    (counts, minimum_support)
+    let (frequents, old_ids) = remap_ids(&counts);
+    //print!("{:?}", counts);
+    (frequents, old_ids, minimum_support)
+    
 }
 
-fn get_frequent_pairs(
-    counts: HashMap<usize, usize>,
-    minimum_support: usize,
-) -> HashMap<(usize, usize), usize> {
-    let mut ret: HashMap<(usize, usize), usize> = HashMap::new();
+// Associate integer values 0....n with IDs in the frequent item set
+// and return a mapping between the new ids and the old ids.
+// This way the elements can go into a matrix and the position of the matrix can determine the original ID.
+pub fn remap_ids( frequent_items: &HashMap<usize, usize>) -> (HashMap<usize, usize>, HashMap<usize, usize>){
+    let mut original_ids = HashMap::new(); // Relates 0..n values to their original ID value from the dataset.
+    let mut frequents = HashMap::new(); // counts array mapping 0...n to counts
+
+    let mut new_id: usize = 0;
+    for (old_id, _) in frequent_items.iter(){
+        original_ids.insert(new_id, *old_id);
+        frequents.insert(*old_id, new_id);
+        new_id += 1;
+    }
+
+    (frequents, original_ids)
+}
+
+fn get_frequent_pairs_matrix(
+    frequents: HashMap<usize, usize>, //old ids -> newids
+) -> triangle_matrix::TriangleMatrix {
+    let mut ret: TriangleMatrix = TriangleMatrix::new(frequents.len());
 
     let f = File::open(DIRECTORY).unwrap();
     let reader = BufReader::new(f);
@@ -75,25 +99,20 @@ fn get_frequent_pairs(
 
         for i in 0..items_usize.len() {
             let i1 = *items_usize.get(i).unwrap();
-            if counts.contains_key(&i1) {
+            if frequents.contains_key(&i1) { //If first was frequent
                 for j in (i + 1)..items_usize.len() {
                     let i2 = *items_usize.get(j).unwrap();
 
-                    if counts.contains_key(&i2) {
+                    if frequents.contains_key(&i2) { // and second was frequent
                         // If both are frequent
-                        let value = ret.get_mut(&(i1, i2));
-                        match value {
-                            Some(val) => *val += 1, //If value is known, increment quantity.
-                            None => {
-                                ret.insert((i1, i2), 1);
-                            } //Otherwise, initialize to 1.
-                        }
+                        ret.increment(*frequents.get(&i1).unwrap(), *frequents.get(&i2).unwrap());
                     };
                 }
             }
         }
     }
 
-    ret.retain(|_, &mut v| v >= minimum_support); // Only return pairs meeting threshold
+
+
     ret
 }
