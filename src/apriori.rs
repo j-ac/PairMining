@@ -102,7 +102,7 @@ fn get_frequent_pairs_matrix(
             if frequents.contains_key(&i1) { //If first was frequent
                 for j in (i + 1)..items_usize.len() {
                     let i2 = *items_usize.get(j).unwrap();
-
+nah 
                     if frequents.contains_key(&i2) { // and second was frequent
                         // If both are frequent
                         ret.increment(*frequents.get(&i1).unwrap(), *frequents.get(&i2).unwrap());
