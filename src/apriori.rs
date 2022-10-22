@@ -17,11 +17,14 @@ pub fn run() -> std::io::Result<()> {
     let (frequent_items, minimum_support) = get_item_counts();
     let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support);
 
+
+    let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
     for i in frequent_pairs.iter() {
-        println!("{:?}", i.0);
+        write!(out, "{:?}\n", i.0);
     }
 
-    println!("Runtime: {:.2?}", start.elapsed());
+    
+    println!("\nRuntime: {:.2?}", start.elapsed());
     Ok(())
 }
 
@@ -37,8 +40,8 @@ fn get_item_counts() -> (HashMap<usize, usize>, usize) {
         for item in line.unwrap().split_whitespace() {
             let item_as_usize = item.parse::<usize>().unwrap(); // string -> int
 
-            match counts.get_mut(&item_as_usize) {
-                Some(value) => *value += 1, //Use of pointer greatly reduces insertion cost
+            match counts.get(&item_as_usize) {
+                Some(value) => {counts.insert(item_as_usize, value + 1);}, //Use of pointer greatly reduces insertion cost
                 None => {counts.insert(item_as_usize, 1);} //initialize to 1
             }
         }
@@ -58,7 +61,10 @@ fn get_frequent_pairs(
     let f = File::open(DIRECTORY).unwrap();
     let reader = BufReader::new(f);
 
+    let mut c = 0; //Debug
     for line in reader.lines() {
+        /* c += 1; //Debug
+        if (c % 4800 == 0) {println!("{}", c);} //Debug */
         let l = line.unwrap();
         let items: Vec<&str> = l.split_whitespace().collect();
 
