@@ -1,5 +1,11 @@
 mod apriori;
+mod pcy;
 
 fn main(){
-    apriori::run();
+    let algo: usize = 0;
+
+    match algo {
+        0 => {apriori::run();}
+        _ => {pcy::run();}
+    }
 }
