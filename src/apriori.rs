@@ -17,13 +17,11 @@ pub fn run() -> std::io::Result<()> {
     let (frequent_items, minimum_support) = get_item_counts();
     let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support);
 
-
     let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
     for i in frequent_pairs.iter() {
         write!(out, "{:?}\n", i.0);
     }
 
-    
     println!("\nRuntime: {:.2?}", start.elapsed());
     Ok(())
 }
@@ -41,9 +39,14 @@ fn get_item_counts() -> (HashMap<usize, usize>, usize) {
             let item_as_usize = item.parse::<usize>().unwrap(); // string -> int
 
             match counts.get(&item_as_usize) {
-                Some(value) => {counts.insert(item_as_usize, value + 1);}, //Use of pointer greatly reduces insertion cost
-                None => {counts.insert(item_as_usize, 1);} //initialize to 1
+                Some(value) => {
+                    counts.insert(item_as_usize, value + 1);
+                } //Use of pointer greatly reduces insertion cost
+                None => {
+                    counts.insert(item_as_usize, 1);
+                } //initialize to 1
             }
+            
         }
     }
 
@@ -73,7 +76,7 @@ fn get_frequent_pairs(
             .iter()
             .for_each(|f| items_usize.push(f.parse::<usize>().unwrap())); // strings interpreted as integers
 
-        for i in 0..items_usize.len() {
+        for i in 0..(items_usize.len() -1 ) {
             let i1 = *items_usize.get(i).unwrap();
             if counts.contains_key(&i1) {
                 for j in (i + 1)..items_usize.len() {
@@ -88,7 +91,7 @@ fn get_frequent_pairs(
                                 ret.insert((i1, i2), 1);
                             } //Otherwise, initialize to 1.
                         }
-                    };
+                    }
                 }
             }
         }
