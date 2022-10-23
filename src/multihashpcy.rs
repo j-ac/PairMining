@@ -11,13 +11,12 @@ use std::ops::Add;
 use std::path::Path;
 use std::time::Instant;
 
-const THRESHOLD: f64 = 0.01;
 const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
 
-pub fn run() -> std::io::Result<()> {
+pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     let start = Instant::now();
 
-    let (frequent_items, minimum_support, pcy_buckets, pcy_buckets2) = get_item_counts();
+    let (frequent_items, minimum_support, pcy_buckets, pcy_buckets2) = get_item_counts(THRESHOLD);
     let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support, pcy_buckets, pcy_buckets2);
 
     let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
@@ -30,7 +29,7 @@ pub fn run() -> std::io::Result<()> {
 }
 
 // Performs pass one
-fn get_item_counts() -> (
+fn get_item_counts(THRESHOLD: f64) -> (
     HashMap<usize, usize>,
     usize,
     HashMap<u64, usize>,

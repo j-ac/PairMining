@@ -8,15 +8,14 @@ use std::ops::Add;
 use std::path::Path;
 use std::time::Instant;
 
-const THRESHOLD: f64 = 0.01;
 const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
-const LINES_IN_INPUT: usize = 88162;
+const LINES_IN_INPUT: usize = 480188;
 // Retail: 88162
 // Netflix: 480188
 
 const NUM_CHUNKS: usize = 4;
 
-pub fn run() -> std::io::Result<()> {
+pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     let start = Instant::now();
 
     let end_line = 0;
@@ -29,7 +28,7 @@ pub fn run() -> std::io::Result<()> {
         let end_line =
             ((LINES_IN_INPUT as f64 / NUM_CHUNKS as f64) * (chunk + 1) as f64).ceil() as usize;
 
-        let (frequent_items, minimum_support) = get_item_counts(start_line, end_line);
+        let (frequent_items, minimum_support) = get_item_counts(start_line, end_line, THRESHOLD);
         let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support);
 
         frequent_item_subsets.push(frequent_pairs);
@@ -57,7 +56,7 @@ pub fn run() -> std::io::Result<()> {
 }
 
 // Performs pass one
-fn get_item_counts(start_line: usize, stop_line: usize) -> (HashMap<usize, usize>, usize) {
+fn get_item_counts(start_line: usize, stop_line: usize, THRESHOLD: f64) -> (HashMap<usize, usize>, usize) {
     let f = File::open(DIRECTORY).unwrap();
     let reader = BufReader::new(f);
 

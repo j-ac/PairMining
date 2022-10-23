@@ -8,16 +8,16 @@ use std::io::BufReader;
 use std::ops::Add;
 use std::path::Path;
 use std::time::Instant;
+use std::env;
 
-const THRESHOLD: f64 = 0.01;
 const SAMPLE_SIZE: f64 = 0.01; // fraction of lines parsed
-const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
+const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\netflix.data";
 const SEED: [u8;32] = [0 as u8; 32]; // Use the same seed in pass one and pass 2 so the same lines are read.
 
-pub fn run() -> std::io::Result<()> {
+pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     let start = Instant::now();
 
-    let (frequent_items, minimum_support_sample, minimum_support_actual) = get_item_counts();
+    let (frequent_items, minimum_support_sample, minimum_support_actual) = get_item_counts(THRESHOLD);
     let mut is_using_sample: bool = true;
     let frequent_pairs = get_frequent_pairs(&frequent_items, minimum_support_sample, is_using_sample);
 
@@ -46,7 +46,7 @@ pub fn run() -> std::io::Result<()> {
 }
 
 // Performs pass one
-fn get_item_counts() -> (HashMap<usize, usize>, usize, usize) {
+fn get_item_counts(THRESHOLD: f64) -> (HashMap<usize, usize>, usize, usize) {
     let f = File::open(DIRECTORY).unwrap();
     let reader = BufReader::new(f);
 
