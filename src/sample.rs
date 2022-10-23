@@ -17,8 +17,24 @@ const SEED: [u8;32] = [0 as u8; 32]; // Use the same seed in pass one and pass 2
 pub fn run() -> std::io::Result<()> {
     let start = Instant::now();
 
-    let (frequent_items, minimum_support) = get_item_counts();
-    let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support);
+    let (frequent_items, minimum_support_sample, minimum_support_actual) = get_item_counts();
+    let mut is_using_sample: bool = true;
+    let frequent_pairs = get_frequent_pairs(&frequent_items, minimum_support_sample, is_using_sample);
+
+    // Second pass gets real totals to compare against our sample
+    is_using_sample = false;
+    let no_sample_frequent_pairs = get_frequent_pairs(&frequent_items, minimum_support_actual, is_using_sample);
+
+    // If a pair found with the sample did not appear in the actual 
+    let mut false_positives = Vec::new();
+    for (key, _) in frequent_pairs.iter(){
+        if !no_sample_frequent_pairs.contains_key(&key){
+            false_positives.push(key);
+        }
+    }
+
+    print!("{} false positives: {:?}", false_positives.len(), false_positives);
+    
 
     let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
     for i in frequent_pairs.iter() {
@@ -30,7 +46,7 @@ pub fn run() -> std::io::Result<()> {
 }
 
 // Performs pass one
-fn get_item_counts() -> (HashMap<usize, usize>, usize) {
+fn get_item_counts() -> (HashMap<usize, usize>, usize, usize) {
     let f = File::open(DIRECTORY).unwrap();
     let reader = BufReader::new(f);
 
@@ -59,14 +75,16 @@ fn get_item_counts() -> (HashMap<usize, usize>, usize) {
         }
     }
 
-    let minimum_support = (num_baskets as f64 * THRESHOLD).ceil() as usize;
-    counts.retain(|_, &mut v| v >= minimum_support); // Keep everything meeting the threshold
-    (counts, minimum_support)
+    let minimum_support_sample = (num_baskets as f64 * THRESHOLD).ceil() as usize;
+    let minimum_support_actual = (num_lines as f64 * THRESHOLD).ceil() as usize;
+    counts.retain(|_, &mut v| v >= minimum_support_sample); // Keep everything meeting the threshold
+    (counts, minimum_support_sample, minimum_support_actual)
 }
 
 fn get_frequent_pairs(
-    counts: HashMap<usize, usize>,
+    counts: &HashMap<usize, usize>,
     minimum_support: usize,
+    is_using_sample: bool,
 ) -> HashMap<(usize, usize), usize> {
     let mut ret: HashMap<(usize, usize), usize> = HashMap::new();
 
@@ -79,7 +97,7 @@ fn get_frequent_pairs(
         let r: f64 = rng.gen(); // random sampling
         /* c += 1; //Debug
         if (c % 4800 == 0) {println!("{}", c);} //Debug */
-        if (r < SAMPLE_SIZE) {
+        if (!is_using_sample || r < SAMPLE_SIZE) {
             let l = line.unwrap();
             let items: Vec<&str> = l.split_whitespace().collect();
     
