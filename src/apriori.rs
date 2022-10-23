@@ -8,7 +8,7 @@ use std::ops::Add;
 use std::path::Path;
 use std::time::Instant;
 
-const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
+const DIRECTORY: &str = "./netflix.data";
 
 pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     let start = Instant::now();
@@ -16,7 +16,7 @@ pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     let (frequent_items, minimum_support) = get_item_counts(THRESHOLD);
     let frequent_pairs = get_frequent_pairs(frequent_items, minimum_support);
 
-    let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
+    let mut out = std::fs::File::create(format!("apriori{}{}{}", THRESHOLD, DIRECTORY, ".out")).unwrap();
     for i in frequent_pairs.iter() {
         write!(out, "{:?}\n", i.0);
     }

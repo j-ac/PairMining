@@ -8,7 +8,7 @@ use std::ops::Add;
 use std::path::Path;
 use std::time::Instant;
 
-const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\retail.dat";
+const DIRECTORY: &str = "./netflix.data";
 const LINES_IN_INPUT: usize = 480188;
 // Retail: 88162
 // Netflix: 480188
@@ -45,7 +45,7 @@ pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     let minimum_support: usize = (THRESHOLD * LINES_IN_INPUT as f64).ceil() as usize;
     let verified_pairs = get_verified_frequent_pairs(frequent_candidates, minimum_support);
 
-    let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
+    let mut out = std::fs::File::create(format!("SON{}{}{}", THRESHOLD, DIRECTORY, ".out")).unwrap();
     for (key, _) in verified_pairs.iter() {
 
         write!(out, "{:?}\n", key);

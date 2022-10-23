@@ -11,7 +11,7 @@ use std::time::Instant;
 use std::env;
 
 const SAMPLE_SIZE: f64 = 0.01; // fraction of lines parsed
-const DIRECTORY: &str = "C:\\Users\\xxmem\\Desktop\\school\\4\\Big Data Systems\\A1\\netflix.data";
+const DIRECTORY: &str = "./netflix.data";
 const SEED: [u8;32] = [0 as u8; 32]; // Use the same seed in pass one and pass 2 so the same lines are read.
 
 pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
@@ -36,7 +36,7 @@ pub fn run(THRESHOLD: f64) -> std::io::Result<()> {
     print!("{} false positives: {:?}", false_positives.len(), false_positives);
     
 
-    let mut out = std::fs::File::create(format!("{}{}", DIRECTORY, ".out")).unwrap();
+    let mut out = std::fs::File::create(format!("sample{}{}{}", THRESHOLD, DIRECTORY, ".out")).unwrap();
     for i in frequent_pairs.iter() {
         write!(out, "{:?}\n", i.0);
     }
